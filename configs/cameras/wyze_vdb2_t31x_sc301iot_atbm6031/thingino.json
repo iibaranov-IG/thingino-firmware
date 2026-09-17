@@ -18,5 +18,8 @@
     "sub1g": 59,
     "wlan": 57,
     "speaker": 58
+  },
+  "chime": {
+    "bypass": true
   }
 }
