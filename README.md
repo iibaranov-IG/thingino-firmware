@@ -1,3 +1,66 @@
+# Broadcast Control Lab — Thingino fork
+
+This is Igor Baranov's working fork of Thingino. BCL repair reports are independent engineering results, not official Thingino releases or hardware certification. Original project documentation is retained below.
+
+## Wyze Video Doorbell v2: button events for Home Assistant
+
+**Published: 17 September 2026. Status: BCL host regression PASS; firmware build and hardware acceptance pending.**
+
+The original [Thingino issue #1623](https://github.com/themactep/thingino-firmware/issues/1623), reported by WLTB-Gino, describes a real button that plays the local chime but never sends its Home Assistant doorbell event. Credit for the original diagnosis and on-device workaround belongs to that report. Its successful workaround is not hardware verification of this candidate.
+
+### Existing repair — two profile files only
+
+[Inspect the tested repair commit](https://github.com/iibaranov-IG/thingino-firmware/commit/bf8aea31c6006ca0b41e2b56c486fd5bd8628968) · [Source patch](https://github.com/iibaranov-IG/thingino-firmware/commit/bf8aea31c6006ca0b41e2b56c486fd5bd8628968.patch) · [Existing BCL PR #38](https://github.com/iibaranov-IG/broadcast-control-lab/pull/38)
+
+For profile `wyze_vdb2_t31x_sc301iot_atbm6031`, the patch enables `BR2_PACKAGE_WYZE_ACCESSORY` and `BR2_PACKAGE_WYZE_ACCESSORY_DOORBELL_CTRL`, and sets `chime.bypass=true`. Existing package hooks then install the event handler and its `KEY_1 RELEASE` rule. The original `KEY_1 TIMED` rule retains responsibility for the local sound; bypass avoids requiring a VDB1 wireless-chime sound mapping.
+
+No shared scripts, GPIO assignments, reset configuration, networking, bootloader or other camera profiles are changed by the repair.
+
+| Identity | Exact revision |
+| --- | --- |
+| Upstream baseline | `4b48cff9d1ff9f6c32d8bdbffeb76a4695c22f45` |
+| Tested repair in this fork | `bf8aea31c6006ca0b41e2b56c486fd5bd8628968` |
+| Candidate source tree | `4636499e454fccdc109c8a5fb7c358bc90698572` |
+| Existing repair branch | `bcl/thingino-1623-vdb2-doorbell` |
+| BCL test revision | `51257d03313052b9ad6a35eb4e88959d5155706c` |
+
+**Use the exact repair commit above to identify the tested source. This README publication does not merge the repair into this fork's `master`, and a later branch tip is not automatically covered by this evidence.**
+
+### Completed BCL red → green verification
+
+[BCL v2 run #203 — completed successfully](https://github.com/iibaranov-IG/broadcast-control-lab/actions/runs/35200485849) · [Evidence archive](https://github.com/iibaranov-IG/broadcast-control-lab/actions/runs/35200485849/artifacts/10487382760)
+
+| Stage | Recorded result |
+| --- | --- |
+| Unpatched baseline, unchanged 11-test regression | Expected failure: exit 1; 3 passed, 8 failed, 0 skipped |
+| Patched candidate, same regression | Exit 0; 11 passed, 0 failed, 0 skipped |
+| Candidate suite, same configured 11-test scope | Exit 0; 11 passed, 0 failed, 0 skipped |
+
+The checks execute selected production GNU make install/finalize recipes and filesystem-rebased production `doorbell_event` / `ha-common` shell logic. They cover package selection, executable handler installation, one release rule and one local-chime rule, captured retained `ON` publications in day/night modes, repeated presses with cached `ON`, disabled or absent Home Assistant support, preserved GPIO/reset configuration, and shell syntax.
+
+`jct`, GPIO/LED, sleep, playback and `mosquitto_pub` are explicit test shims. Captured MQTT command arguments are not delivery through a live broker. Preserved playback commands are not a measurement of actual sound. The configured candidate suite is the focused 11-test regression, not the full Thingino test suite.
+
+Reproduce from the recorded BCL revision with its documented runtime prerequisites:
+
+```sh
+git checkout --detach 51257d03313052b9ad6a35eb4e88959d5155706c
+node scripts/bcl.cjs run thingino-firmware-1623
+```
+
+Run these commands in a separate checkout of `iibaranov-IG/broadcast-control-lab`, not in this firmware repository. [Pinned case and test sources](https://github.com/iibaranov-IG/broadcast-control-lab/tree/51257d03313052b9ad6a35eb4e88959d5155706c/cases/thingino-firmware-1623).
+
+Evidence archive: `thingino-firmware-1623-evidence.zip`, artifact ID `10487382760` (14 files). SHA-256: `c7a972c76c6167a5e0d82ad649e5113c19fccc6ffa004b0d3ede21e78acd759c`. The archive checksum and recorded log/report hashes were checked before this publication. The archive contains the machine-readable evidence, candidate manifest, baseline/candidate logs and owner-check instructions. GitHub artifact retention is finite; the archive checksum identifies the saved copy.
+
+### Remaining verification
+
+No firmware image was built or flashed in this BCL run. Physical GPIO timing/debounce, actual sound, live MQTT delivery, the subsequent `OFF` transition, Home Assistant UI behavior, reboot, video and firmware image footprint still need verification on the exact candidate image. Hardware and full-application verification remain **false**.
+
+The existing case records manual connector-assisted selection review, not output from the `bcl triage` CLI. This fork-local publication does not claim upstream approval or completion of additional upstream-publication gates. Discussion and evidence stay in the existing [BCL PR #38](https://github.com/iibaranov-IG/broadcast-control-lab/pull/38); no duplicate upstream PR is created by this publication.
+
+---
+
+## Original upstream documentation
+
 Thingino
 --------
 
